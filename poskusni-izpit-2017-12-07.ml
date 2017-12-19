@@ -36,35 +36,27 @@ let kompozitum f g x = g (f x)
    tipom /'a drevo/ z enim konstruktorjem, ki sprejme:
    - vrednost (koren) tipa /'a/ in
    - seznam (gozd) dreves tipa /'a drevo/. *)
-type 'a drevo = Empty | Node of 'a drevo * 'a * 'a drevo
+type 'a drevo = Empty | Node of 'a * 'a drevo list 
 
-let leaf x = Node(Empty, x, Empty)
-
-let test_tree1 = Node( Node(leaf 0, 2, Empty), 5, Node(leaf 6, 7, leaf 11))
-
-let test_tree2 = Node( Node(leaf 0, (-1), Empty), 5, Node(leaf 6, 7, leaf 11))
+let rose_tree1 = Node (1, [Empty; Node (1, [Empty])])
+let rose_tree2 = Node (2, [Empty; Node (-2, [Empty]); Node (2, [Empty])])
 
 (* 2.2) Napišite funkcijo, ki vrne koren danega rožnega drevesa. *)
-let koren drevo = 
-  match drevo with
-  | Empty -> Empty
-  | Node(l, x, r) -> x 
+let koren = function
+  | Empty -> None
+  | Node(x, _) -> Some x 
 
 (* 2.3) Napišite funkcijo, ki preveri, ali drevo celih števil vsebuje kakšno negativno število. *)
-let kaksno_negativno drevo = 
-  let rec naredi_seznam drevo = 
-    match drevo with 
-    | Empty -> []
-    | Node(l, x, r) -> (naredi_seznam l) @ [x] @ (naredi_seznam r) @ []  
-  in
-  let rec preveri_negativno = function
-    | [] -> false
-    | hd :: tl -> 
-	  if hd >= 0 
-	  then preveri_negativno tl
-	  else true
-  in 
-  drevo |> naredi_seznam |> preveri_negativno
+let rec kaksno_negativno drevo = 
+  match drevo with
+  | Empty -> false
+  | Node(x, poddrevo) -> 
+    if x >= 0
+	then let rec kaksno_negativno_poddrevo = function
+	       | [] -> false
+		   | hd::tl -> kaksno_negativno hd || (kaksno_negativno_poddrevo tl)
+         in kaksno_negativno_poddrevo poddrevo
+	else true
   
 
 (* 2.4) Sestavite funkcijo, ki sprejme naravno število ter sestavi (poljubno)
@@ -72,7 +64,17 @@ let kaksno_negativno drevo =
    Namig: napišite pomožno funkcijo, ki ustvari poljuben seznam dane dolžine. *)
 
    
-let drevo_z_veliko_otroci = failwith "dopolni me"
+let rec seznam n = 
+  if n = 0 
+    then []
+  else
+    (Node (n, [Empty]))::(seznam (n-1))
+
+let rec drevo_z_veliko_otroci n =
+  if n = 0
+    then Empty
+  else
+    Node (n, seznam n)
 
 (* 2.5) Sestavite funkcijo, ki izračuna število vseh vozlišč v drevesu.
    Če želite vse točke, mora biti funkcija repno rekurzivna.
@@ -80,4 +82,12 @@ let drevo_z_veliko_otroci = failwith "dopolni me"
    Opomba: kot ste videli na vajah, nekatere funkcije iz modula List,
    na primer List.map, niso repno rekurzivne, zato se jim raje
    izognite. *)
-let velikost = failwith "dopolni me"
+let rec velikost t = 
+  match t with
+    | Empty -> 0
+    | Node (a, trees) ->
+      let rec aux_velikost = function
+       | [Empty]|[] -> 0
+       | hd::tl -> (velikost hd) + (aux_velikost tl)
+      in
+      1 + aux_velikost trees
